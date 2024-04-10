@@ -1,6 +1,6 @@
 # p9fuse
 
-A FUSE filesystem for accessing 9P filesystems written in Go.
+A FUSE filesystem for accessing 9P filesystems, written in Go.
 
 ## Install
 
