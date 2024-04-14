@@ -11,17 +11,20 @@ import (
 )
 
 func fuseMode(t p9.QIDType) uint32 {
-	switch t {
-	case p9.TypeDir:
+	if (t & p9.TypeDir) == p9.TypeDir {
 		return fuse.S_IFDIR
-	case p9.TypeRegular:
-		return fuse.S_IFREG
-	case p9.TypeLink, p9.TypeSymlink:
-		return fuse.S_IFLNK
-	default:
-		log.Panicf("unsupported QID<->FUSE type: %v", t)
-		return 0
 	}
+	if (t & p9.TypeRegular) == p9.TypeRegular {
+		return fuse.S_IFREG
+	}
+	if (t & p9.TypeLink) == p9.TypeLink {
+		return fuse.S_IFLNK
+	}
+	if (t & p9.TypeSymlink) == p9.TypeSymlink {
+		return fuse.S_IFLNK
+	}
+	log.Panicf("unsupported QID<->FUSE type: %v", t)
+	return 0
 }
 
 func openFlags(flags uint32) p9.OpenFlags {

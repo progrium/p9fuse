@@ -46,7 +46,8 @@ func (r *node) Readdir(ctx context.Context) (fs.DirStream, syscall.Errno) {
 		return nil, sysErrno(err)
 	}
 
-	entries, err := f.Readdir(0, 1024) // todo: more than 1024...
+	// TODO: loop to read more than 8192
+	entries, err := f.Readdir(0, 8192)
 	if err != nil {
 		return nil, sysErrno(err)
 	}
@@ -117,9 +118,42 @@ func (r *node) Open(ctx context.Context, flags uint32) (fh fs.FileHandle, fuseFl
 	return &handle{file: f, path: r.path, fd: fd}, 0, 0
 }
 
-//NodeSetattrer
-//NodeWriter
-//NodeFsyncer
+var _ = (fs.NodeSetattrer)((*node)(nil))
+
+func (r *node) Setattr(ctx context.Context, f fs.FileHandle, in *fuse.SetAttrIn, out *fuse.AttrOut) syscall.Errno {
+	log.Println("setattr", r.path)
+
+	err := r.file.SetAttr(p9.SetAttrMask{
+		Size:        true,
+		Permissions: true,
+		UID:         true,
+		GID:         true,
+		ATime:       true,
+		MTime:       true,
+		CTime:       true,
+	}, p9.SetAttr{
+		Size:             in.Size,
+		Permissions:      p9.FileMode(in.Mode),
+		UID:              p9.UID(in.Uid),
+		GID:              p9.GID(in.Gid),
+		ATimeSeconds:     in.Atime,
+		ATimeNanoSeconds: uint64(in.Atimensec),
+		MTimeSeconds:     in.Mtime,
+		MTimeNanoSeconds: uint64(in.Mtimensec),
+	})
+	if err != nil {
+		return sysErrno(err)
+	}
+
+	_, _, attrs, err := r.file.GetAttr(p9.AttrMaskAll)
+	if err != nil {
+		return sysErrno(err)
+	}
+	out.FromStat(sysStat(attrs))
+
+	return 0
+}
+
 //NodeMkdirer
 //NodeCreater
 //NodeUnlinker

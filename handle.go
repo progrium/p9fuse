@@ -40,3 +40,6 @@ func (r *handle) Flush(ctx context.Context) syscall.Errno {
 
 	return 0
 }
+
+//NodeWriter
+//NodeFsyncer
